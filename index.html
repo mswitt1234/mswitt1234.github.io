@@ -1,36 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>File Processor</title>
+  <meta charset="UTF-8" />
+  <title>Call Flow Analyzer</title>
 </head>
 <body>
-  <h1>Upload and Modify File</h1>
-  <input type="file" id="fileInput" />
-  <button onclick="processFile()">Process</button>
-  <script>
-    function processFile() {
-      const fileInput = document.getElementById('fileInput');
-      const file = fileInput.files[0];
-      if (!file) return alert("Please upload a file.");
+  <h1>Upload Call Flow Folder</h1>
+  <input type="file" id="folderInput" webkitdirectory multiple />
+  <button onclick="processFiles()">Process Files</button>
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        let content = e.target.result;
+  <script>
+    async function processFiles() {
+      const input = document.getElementById('folderInput');
+      const files = Array.from(input.files);
 
-        // Example: convert text to uppercase
-        let modifiedContent = content.toUpperCase();
+      const callflowFiles = files.filter(file =>
+        file.name.endsWith('.callflow') || file.name.endsWith('.workflow')
+      );
 
-        // Create a blob and trigger download
-        const blob = new Blob([modifiedContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'modified_' + file.name;
-        a.click();
-        URL.revokeObjectURL(url);
-      };
-      reader.readAsText(file);
-    }
-  </script>
+      if (callflowFiles.length === 0) {
+        alert('No .callflow or .workflow files found.');
+        return;
+      }
+
+      const sizeData = [];
+      const dependencyData = [];
+
+      for (const file of callflowFiles) {
+        const text = await file.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(text, "application/xml");
+
+        // Placeholder: log root element
+        console.log(`Parsed ${file.name}:`, xmlDoc.documentElement.nodeName);
+
+        // TODO: Add logic to extract sizing and dependency data
+        // sizeData.push(...);
+        // dependencyData.push(...);
+      }
+
+      // TODO: Convert sizeData and dependencyData to CSV and trigger download
+      console.log("Ready to generate CSVs");
+    }
+  </script>
 </body>
 </html>
