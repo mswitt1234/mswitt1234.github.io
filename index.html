@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>File Processor</title>
+</head>
+<body>
+  <h1>Upload and Modify File</h1>
+  <input type="file" id="fileInput" />
+  <button onclick="processFile()">Process</button>
+  <script>
+    function processFile() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      if (!file) return alert("Please upload a file.");
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        let content = e.target.result;
+
+        // Example: convert text to uppercase
+        let modifiedContent = content.toUpperCase();
+
+        // Create a blob and trigger download
+        const blob = new Blob([modifiedContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'modified_' + file.name;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+</html>
