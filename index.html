@@ -71,17 +71,17 @@
         const children = root.children[0]?.children || [];
 
         const counters = {
-          Menu: 0, Assign: 0, "ECMA Script": 0, Backend: 0, Branching: 0,
+          Menu: 0, Assign: 0, EcmaScript: 0, Backend: 0, Branching: 0,
           Subroutine: 0, "User Data": 0, "Play Application": 0, "Play Message": 0,
-          "Web Request": 0, Prompt: 0, Entry: 0, Exit: 0, "Interaction Data": 0,
-          Input: 0, Log: 0, Target: 0, "Force Route": 0, Disconnect: 0,
-          "Play Sound": 0, "Update Record": 0, "Record Processed": 0,
-          "Stop Interaction": 0, "Wait Event": 0, Detach: 0, "SCXML State": 0,
-          "User Input": 0, Looping: 0, "Begin Parallel": 0, "End Parallel": 0,
-          "Default Route": 0, "Set Language": 0, Subdialog: 0, Transfer: 0,
-          "HTTP Rest": 0, "URS Function": 0, Pause: 0, "Delete User Announcement": 0,
-          "Create User Announcement": 0, "Raise Event": 0, "Business Rule": 0,
-          "Create Interaction": 0, "Identify Contact": 0, NDM: 0
+          "Web Request": 0, Prompt: 0, Entry: 0, Exit: 0, InteractionData: 0,
+          Input: 0, Log: 0, Target: 0, ForceRoute: 0, Disconnect: 0,
+          PlaySound: 0, UpdateRecord: 0, RecordProcessed: 0,
+          StopInteraction: 0, WaitEvent: 0, Detach: 0, SCXMLState: 0,
+          UserInput: 0, Looping: 0, BeginParallel: 0, EndParallel: 0,
+          DefaultRoute: 0, SetLanguage: 0, Subdialog: 0, Transfer: 0,
+          HTTPRest: 0, URSFunction: 0, Pause: 0, DeleteUserAnnouncement: 0,
+          CreateUserAnnouncement: 0, RaiseEvent: 0, BusinessRule: 0,
+          CreateInteraction: 0, IdentifyContact: 0, NDM: 0
         };
 
         const folder = file.webkitRelativePath.split("/")[0];
@@ -134,15 +134,26 @@
         processLabel.textContent = `Processed ${i + 1} of ${callflowFiles.length} files`;
       }
 
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const timestamp = `_${pad(now.getMonth() + 1)}.${pad(now.getDate())}.${now.getFullYear()}_${pad(now.getHours())}.${pad(now.getMinutes())}.${pad(now.getSeconds())}`;
+
       const sizeHeaders = [
-        "Folder", "Name", "Type", ...Object.keys(sizeData[0] ? sizeData[0].slice(3) : [])
+        "Folder", "Name", "Type", "Menu", "Assign", "EcmaScript", "Backend", "Branching", "Subroutine",
+        "User Data", "Play Application", "Play Message", "Web Request", "Prompt", "Entry", "Exit",
+        "InteractionData", "Input", "Log", "Target", "ForceRoute", "Disconnect", "PlaySound",
+        "UpdateRecord", "RecordProcessed", "StopInteraction", "WaitEvent", "Detach", "SCXMLState",
+        "UserInput", "Looping", "BeginParallel", "EndParallel", "DefaultRoute", "SetLanguage",
+        "Subdialog", "Transfer", "HTTPRest", "URSFunction", "Pause", "DeleteUserAnnouncement",
+        "CreateUserAnnouncement", "RaiseEvent", "BusinessRule", "CreateInteraction", "IdentifyContact", "NDM"
       ];
+
       const dependencyHeaders = [
         "Folder", "FileName", "FileType", "DependencyType", "Name", "ID", "Value", "Summary"
       ];
 
-      downloadCSV(sizeData, sizeHeaders, "Composer_FlowSize.csv");
-      downloadCSV(dependencyData, dependencyHeaders, "Composer_Dependencies.csv");
+      downloadCSV(sizeData, sizeHeaders, `Composer_FlowSize${timestamp}.csv`);
+      downloadCSV(dependencyData, dependencyHeaders, `Composer_Dependencies${timestamp}.csv`);
 
       uploadLabel.textContent = "Upload complete.";
       processLabel.textContent = "Processing complete. CSVs downloaded.";
