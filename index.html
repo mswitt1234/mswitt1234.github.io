@@ -3,10 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <title>Call Flow Analyzer</title>
+  <style>
+    progress {
+      width: 100%;
+      margin-bottom: 1em;
+    }
+  </style>
 </head>
 <body>
   <h1>Upload Call Flow Folder</h1>
   <input type="file" id="folderInput" webkitdirectory multiple />
+  <br><br>
+  <progress id="uploadProgress" value="0" max="100"></progress>
+  <label id="uploadLabel">Waiting for upload...</label>
+  <br>
+  <progress id="processProgress" value="0" max="100"></progress>
+  <label id="processLabel">Waiting to process...</label>
+  <br><br>
   <button onclick="processFiles()">Process Files</button>
 
   <script>
@@ -34,10 +47,22 @@
         file.name.endsWith('.callflow') || file.name.endsWith('.workflow')
       );
 
+      const uploadProgress = document.getElementById('uploadProgress');
+      const uploadLabel = document.getElementById('uploadLabel');
+      const processProgress = document.getElementById('processProgress');
+      const processLabel = document.getElementById('processLabel');
+
+      uploadProgress.max = callflowFiles.length;
+      uploadProgress.value = 0;
+      uploadLabel.textContent = `Uploading ${callflowFiles.length} files...`;
+
       const sizeData = [];
       const dependencyData = [];
 
-      for (const file of callflowFiles) {
+      for (let i = 0; i < callflowFiles.length; i++) {
+        const file = callflowFiles[i];
+        uploadProgress.value = i + 1;
+
         const text = await file.text();
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(text, "application/xml");
@@ -103,6 +128,10 @@
           folder, fileName, fileType,
           ...Object.values(counters)
         ]);
+
+        processProgress.max = callflowFiles.length;
+        processProgress.value = i + 1;
+        processLabel.textContent = `Processed ${i + 1} of ${callflowFiles.length} files`;
       }
 
       const sizeHeaders = [
@@ -114,6 +143,9 @@
 
       downloadCSV(sizeData, sizeHeaders, "Composer_FlowSize.csv");
       downloadCSV(dependencyData, dependencyHeaders, "Composer_Dependencies.csv");
+
+      uploadLabel.textContent = "Upload complete.";
+      processLabel.textContent = "Processing complete. CSVs downloaded.";
     }
   </script>
 </body>
