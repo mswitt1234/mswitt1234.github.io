@@ -10,18 +10,29 @@
   <button onclick="processFiles()">Process Files</button>
 
   <script>
+    function downloadCSV(data, headers, filename) {
+      const csvRows = [headers.join(",")];
+      for (const row of data) {
+        const escaped = row.map(val =>
+          `"${String(val).replace(/"/g, '""')}"`
+        );
+        csvRows.push(escaped.join(","));
+      }
+      const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
     async function processFiles() {
       const input = document.getElementById('folderInput');
       const files = Array.from(input.files);
-
       const callflowFiles = files.filter(file =>
         file.name.endsWith('.callflow') || file.name.endsWith('.workflow')
       );
-
-      if (callflowFiles.length === 0) {
-        alert('No .callflow or .workflow files found.');
-        return;
-      }
 
       const sizeData = [];
       const dependencyData = [];
@@ -31,16 +42,78 @@
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(text, "application/xml");
 
-        // Placeholder: log root element
-        console.log(`Parsed ${file.name}:`, xmlDoc.documentElement.nodeName);
+        const root = xmlDoc.documentElement;
+        const children = root.children[0]?.children || [];
 
-        // TODO: Add logic to extract sizing and dependency data
-        // sizeData.push(...);
-        // dependencyData.push(...);
+        const counters = {
+          Menu: 0, Assign: 0, "ECMA Script": 0, Backend: 0, Branching: 0,
+          Subroutine: 0, "User Data": 0, "Play Application": 0, "Play Message": 0,
+          "Web Request": 0, Prompt: 0, Entry: 0, Exit: 0, "Interaction Data": 0,
+          Input: 0, Log: 0, Target: 0, "Force Route": 0, Disconnect: 0,
+          "Play Sound": 0, "Update Record": 0, "Record Processed": 0,
+          "Stop Interaction": 0, "Wait Event": 0, Detach: 0, "SCXML State": 0,
+          "User Input": 0, Looping: 0, "Begin Parallel": 0, "End Parallel": 0,
+          "Default Route": 0, "Set Language": 0, Subdialog: 0, Transfer: 0,
+          "HTTP Rest": 0, "URS Function": 0, Pause: 0, "Delete User Announcement": 0,
+          "Create User Announcement": 0, "Raise Event": 0, "Business Rule": 0,
+          "Create Interaction": 0, "Identify Contact": 0, NDM: 0
+        };
+
+        const folder = file.webkitRelativePath.split("/")[0];
+        const [fileName, fileType] = file.name.split(".");
+
+        for (const node of children) {
+          const category = node.getAttribute("category");
+          if (category in counters) counters[category]++;
+
+          const id = node.getAttribute("xmi:id") || node.getAttribute("id");
+          const name = node.getAttribute("name") || "";
+          const uri = node.getAttribute("uri") || "";
+          const script = node.getAttribute("script") || "";
+          const resource = node.getAttribute("resource") || "";
+          const device = node.getAttribute("device") || "";
+
+          if (category === "ECMA Script") {
+            dependencyData.push([
+              folder, fileName, fileType, "ECMA_Script", name, id,
+              script.length >= 32759 ? "Script Too Big" : script, ""
+            ]);
+          } else if (category === "Backend") {
+            dependencyData.push([folder, fileName, fileType, "Backend", name, id, uri, ""]);
+          } else if (category === "Subroutine") {
+            dependencyData.push([folder, fileName, fileType, "Subroutine", name, id, uri, ""]);
+          } else if (category === "Play Application") {
+            dependencyData.push([folder, fileName, fileType, "Play Application", name, id, resource, ""]);
+          } else if (category === "Play Message") {
+            dependencyData.push([folder, fileName, fileType, "Play Message", name, id, "WIP Future Enhancement", ""]);
+          } else if (category === "Web Request") {
+            dependencyData.push([folder, fileName, fileType, "Web Request", name, id, uri, ""]);
+          } else if (category === "Prompt") {
+            let promptValue = "";
+            for (const child of node.children) {
+              if (child.tagName === "prompts") {
+                promptValue += (promptValue ? " + " : "") + (child.getAttribute("value") || "");
+              }
+            }
+            dependencyData.push([folder, fileName, fileType, "Prompt", name, id, promptValue, ""]);
+          }
+        }
+
+        sizeData.push([
+          folder, fileName, fileType,
+          ...Object.values(counters)
+        ]);
       }
 
-      // TODO: Convert sizeData and dependencyData to CSV and trigger download
-      console.log("Ready to generate CSVs");
+      const sizeHeaders = [
+        "Folder", "Name", "Type", ...Object.keys(sizeData[0] ? sizeData[0].slice(3) : [])
+      ];
+      const dependencyHeaders = [
+        "Folder", "FileName", "FileType", "DependencyType", "Name", "ID", "Value", "Summary"
+      ];
+
+      downloadCSV(sizeData, sizeHeaders, "Composer_FlowSize.csv");
+      downloadCSV(dependencyData, dependencyHeaders, "Composer_Dependencies.csv");
     }
   </script>
 </body>
